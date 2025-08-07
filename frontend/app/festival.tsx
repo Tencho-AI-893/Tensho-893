@@ -53,10 +53,28 @@ const STRAPI_TOKEN = process.env.EXPO_PUBLIC_STRAPI_TOKEN;
 const EXPO_BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 const FESTIVALS_ENDPOINT = `${STRAPI_URL}/api/festivals`;
 
+// Stripe Test Configuration
+const STRIPE_PUBLISHABLE_KEY = 'pk_test_51234567890abcdef'; // Test key placeholder
+const STRIPE_SUCCESS_URL = 'https://moment.success';
+const STRIPE_CANCEL_URL = 'https://moment.cancel';
+
+const { width } = Dimensions.get('window');
+
 export default function FestivalScreen() {
   const [festival, setFestival] = useState<Festival | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  
+  // Ticket Purchase Modal States
+  const [ticketModalVisible, setTicketModalVisible] = useState(false);
+  const [selectedTicketType, setSelectedTicketType] = useState<'general' | 'vip'>('general');
+  const [ticketQuantity, setTicketQuantity] = useState(1);
+  const [purchaseLoading, setPurchaseLoading] = useState(false);
+
+  const ticketTypes = {
+    general: { name: '一般チケット', price: 3000, description: 'スタンダード入場券' },
+    vip: { name: 'VIPチケット', price: 8000, description: 'VIP特典付き入場券' }
+  };
 
   const fetchFestivalData = async (isRefresh = false) => {
     try {
