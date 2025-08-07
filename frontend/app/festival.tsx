@@ -45,7 +45,8 @@ interface Festival {
 }
 
 // Use Strapi CMS endpoint or fallback to local backend
-const STRAPI_URL = process.env.EXPO_PUBLIC_STRAPI_URL || 'https://your-strapi';
+const STRAPI_URL = process.env.EXPO_PUBLIC_STRAPI_URL || 'https://api.momentmusic.jp';
+const STRAPI_TOKEN = process.env.EXPO_PUBLIC_STRAPI_TOKEN;
 const EXPO_BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 const FESTIVALS_ENDPOINT = `${STRAPI_URL}/api/festivals`;
 
@@ -63,15 +64,24 @@ export default function FestivalScreen() {
       // First try Strapi CMS
       let response;
       try {
-        response = await axios.get(FESTIVALS_ENDPOINT, {
+        const headers: any = {
+          'Content-Type': 'application/json',
+        };
+        
+        // Add API Token if available
+        if (STRAPI_TOKEN && STRAPI_TOKEN.trim() !== '') {
+          headers['Authorization'] = `Bearer ${STRAPI_TOKEN}`;
+        }
+
+        response = await axios.get(`${FESTIVALS_ENDPOINT}?populate=*`, {
           timeout: 8000,
-          headers: {
-            'Content-Type': 'application/json',
-          }
+          headers
         });
         console.log('✅ Successfully fetched from Strapi CMS');
+        console.log('Strapi Response:', response.data);
       } catch (strapiError) {
         console.log('⚠️ Strapi not available, falling back to local backend');
+        console.error('Strapi Error:', strapiError);
         // Fallback to local backend
         response = await axios.get(`${EXPO_BACKEND_URL}/api/festivals`, {
           timeout: 5000
@@ -80,18 +90,55 @@ export default function FestivalScreen() {
       }
 
       if (response.data) {
-        // Handle Strapi response format (usually has a 'data' wrapper)
+        // Handle Strapi response format
         const festivals = response.data.data || response.data;
         const festivalData = Array.isArray(festivals) ? festivals[0] : festivals;
         
         if (festivalData) {
-          // Transform Strapi data structure if needed
-          const transformedFestival = {
-            ...festivalData,
-            // Handle Strapi attributes structure
-            ...(festivalData.attributes || {}),
-            id: festivalData.id || festivalData.documentId || festivalData.id
-          };
+          // Transform Strapi data structure
+          let transformedFestival;
+          
+          if (festivalData.attributes) {
+            // Strapi v4 format
+            const attrs = festivalData.attributes;
+            transformedFestival = {
+              id: festivalData.id,
+              name: attrs.title || attrs.name || 'Moment Festival',
+              year: new Date(attrs.date || attrs.createdAt).getFullYear() || 2025,
+              location: attrs.location || '奈良県天川村 フォレスト・イン洞川',
+              date: attrs.date || '2025年7月26日-27日',
+              description: attrs.description || '自然と電子音楽が織りなす至福の瞬間',
+              venue_info: attrs.venue_info || {
+                name: 'フォレスト・イン洞川',
+                address: '奈良県天川村',
+                features: ['神聖な自然環境', '温泉街', 'キャンプ場', '清流'],
+                access: '関西からアクセス良好な秘境の地'
+              },
+              sound_system: attrs.sound_system || {
+                primary: 'Alcons Audio',
+                secondary: 'Function One',
+                description: 'プロ仕様ラインアレイスピーカーによる圧倒的な音質体験'
+              },
+              family_services: attrs.family_services || [
+                { name: 'キッズエリア', description: '安全に配慮した専用エリア', icon: '👶' },
+                { name: 'こどもごはん', description: '栄養バランスを考慮したメニュー', icon: '🍱' },
+                { name: '保育士常駐', description: '資格を持つスタッフが常駐', icon: '👩‍⚕️' },
+                { name: 'ワークショップ', description: '多彩なアクティビティ', icon: '🎨' }
+              ],
+              ticket_info: attrs.ticket_info || {
+                early_bird: { price: 15000, description: '早割チケット' },
+                regular: { price: 18000, description: '一般チケット' },
+                vip: { price: 35000, description: 'VIP体験チケット' },
+                family: { price: 40000, description: 'ファミリーパック(大人2名+子供2名)' }
+              }
+            };
+          } else {
+            // Local backend format or other format
+            transformedFestival = {
+              ...festivalData,
+              id: festivalData.id || festivalData.documentId || String(Date.now())
+            };
+          }
           
           setFestival(transformedFestival);
         }
