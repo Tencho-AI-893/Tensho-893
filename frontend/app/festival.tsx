@@ -426,6 +426,12 @@ const styles = StyleSheet.create({
     marginTop: 15,
     fontSize: 16,
   },
+  loadingSubtext: {
+    color: '#666',
+    marginTop: 8,
+    fontSize: 14,
+    fontStyle: 'italic',
+  },
   errorContainer: {
     flex: 1,
     backgroundColor: '#000',
@@ -446,6 +452,31 @@ const styles = StyleSheet.create({
   retryText: {
     color: '#000',
     fontWeight: 'bold',
+  },
+  sourceIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    marginHorizontal: 20,
+    marginTop: 10,
+    backgroundColor: 'rgba(74, 222, 128, 0.1)',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(74, 222, 128, 0.3)',
+  },
+  sourceText: {
+    color: '#4ade80',
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  pullRefreshHint: {
+    color: '#666',
+    fontSize: 10,
+    marginLeft: 10,
+    fontStyle: 'italic',
   },
   header: {
     paddingHorizontal: 20,
@@ -489,7 +520,7 @@ const styles = StyleSheet.create({
   },
   glassCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 15,
+    borderRadius: 16,
     padding: 20,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
