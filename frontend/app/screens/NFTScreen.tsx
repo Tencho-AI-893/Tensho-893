@@ -240,7 +240,6 @@ export default function NFTScreen() {
           </View>
         )}
       </SafeAreaView>
-    </SafeAreaProvider>
   );
 }
 
