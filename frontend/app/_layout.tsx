@@ -53,7 +53,7 @@ export default function TabLayout() {
           headerTitle: 'MOMENT FESTIVAL',
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons 
-              name={focused ? 'musical-notes' : 'musical-notes-outline'} 
+              name={focused ? 'calendar' : 'calendar-outline'} 
               size={size} 
               color={color} 
             />
