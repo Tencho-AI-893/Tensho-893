@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 
 const { width, height } = Dimensions.get('window');
 
@@ -22,7 +21,6 @@ const SoundWave = () => {
           style={[
             styles.wave,
             { height },
-            { animationDelay: `${index * 0.1}s` }
           ]}
         />
       ))}
@@ -31,16 +29,6 @@ const SoundWave = () => {
 };
 
 export default function HomeScreen() {
-  const router = useRouter();
-
-  const navigateToFestival = () => {
-    router.push('/festival');
-  };
-
-  const navigateToNFT = () => {
-    router.push('/nft');
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -88,44 +76,32 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Quick Actions */}
+        {/* Navigation Info */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>体験する EXPERIENCE</Text>
+          <Text style={styles.sectionTitle}>ナビゲーション</Text>
           
-          <TouchableOpacity style={styles.primaryButton} onPress={navigateToFestival}>
-            <Ionicons name="musical-notes" size={24} color="#000" />
-            <Text style={styles.primaryButtonText}>Moment Festival 2025</Text>
-            <Ionicons name="chevron-forward" size={20} color="#000" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.secondaryButton} onPress={navigateToNFT}>
-            <Ionicons name="diamond-outline" size={24} color="#fff" />
-            <Text style={styles.secondaryButtonText}>NFT Collection</Text>
-            <Ionicons name="chevron-forward" size={20} color="#fff" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Navigation Menu */}
-        <View style={styles.navSection}>
-          <Text style={styles.sectionTitle}>メニュー MENU</Text>
-          
-          <TouchableOpacity style={styles.navButton} onPress={navigateToFestival}>
-            <Ionicons name="musical-notes" size={24} color="#fff" />
-            <Text style={styles.navButtonText}>フェスティバル情報</Text>
-            <Ionicons name="chevron-forward" size={20} color="#fff" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.navButton} onPress={() => router.push('/profile')}>
-            <Ionicons name="person" size={24} color="#fff" />
-            <Text style={styles.navButtonText}>DJ プロフィール</Text>
-            <Ionicons name="chevron-forward" size={20} color="#fff" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.navButton} onPress={navigateToNFT}>
-            <Ionicons name="diamond" size={24} color="#fff" />
-            <Text style={styles.navButtonText}>NFT ギャラリー</Text>
-            <Ionicons name="chevron-forward" size={20} color="#fff" />
-          </TouchableOpacity>
+          <View style={styles.navInfo}>
+            <Text style={styles.navText}>
+              下部のタブから各セクションをご覧いただけます：
+            </Text>
+            
+            <View style={styles.navList}>
+              <View style={styles.navItem}>
+                <Ionicons name="musical-notes" size={20} color="#fff" />
+                <Text style={styles.navItemText}>フェス - Moment Festival 2025の詳細情報</Text>
+              </View>
+              
+              <View style={styles.navItem}>
+                <Ionicons name="person" size={20} color="#fff" />
+                <Text style={styles.navItemText}>プロフィール - DJ Senohの経歴と哲学</Text>
+              </View>
+              
+              <View style={styles.navItem}>
+                <Ionicons name="diamond" size={20} color="#fff" />
+                <Text style={styles.navItemText}>NFT - ミュージックモーメント・ギャラリー</Text>
+              </View>
+            </View>
+          </View>
         </View>
 
         {/* Quote Section */}
@@ -150,7 +126,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   hero: {
-    height: height * 0.8,
+    height: height * 0.7,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
@@ -195,10 +171,6 @@ const styles = StyleSheet.create({
   section: {
     paddingHorizontal: 20,
     paddingVertical: 40,
-  },
-  navSection: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
   },
   sectionTitle: {
     fontSize: 32,
@@ -245,59 +217,32 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
-  primaryButton: {
-    backgroundColor: '#fff',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderRadius: 25,
-    marginBottom: 15,
-  },
-  primaryButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: 'bold',
-    flex: 1,
-    textAlign: 'center',
-  },
-  secondaryButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderRadius: 25,
-  },
-  secondaryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    flex: 1,
-    textAlign: 'center',
-  },
-  navButton: {
+  navInfo: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 15,
+    padding: 20,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  navText: {
+    fontSize: 16,
+    color: '#ccc',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  navList: {
+    gap: 15,
+  },
+  navItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderRadius: 15,
-    marginBottom: 12,
+    paddingHorizontal: 10,
   },
-  navButtonText: {
+  navItemText: {
+    fontSize: 14,
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    marginLeft: 12,
     flex: 1,
-    marginLeft: 15,
   },
   quoteSection: {
     paddingHorizontal: 20,
