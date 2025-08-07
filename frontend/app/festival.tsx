@@ -204,6 +204,110 @@ export default function FestivalScreen() {
     Alert.alert('実装予定', 'チケット予約フォームは次のバージョンで実装されます');
   };
 
+  // Ticket Purchase Functions
+  const openTicketModal = () => {
+    setTicketModalVisible(true);
+  };
+
+  const closeTicketModal = () => {
+    setTicketModalVisible(false);
+    setSelectedTicketType('general');
+    setTicketQuantity(1);
+  };
+
+  const adjustQuantity = (change: number) => {
+    const newQuantity = ticketQuantity + change;
+    if (newQuantity >= 1 && newQuantity <= 10) {
+      setTicketQuantity(newQuantity);
+    }
+  };
+
+  const calculateTotal = () => {
+    return ticketTypes[selectedTicketType].price * ticketQuantity;
+  };
+
+  const handleStripeCheckout = async () => {
+    try {
+      setPurchaseLoading(true);
+      
+      const selectedTicket = ticketTypes[selectedTicketType];
+      const totalAmount = calculateTotal();
+      
+      // Create mock Stripe Checkout URL (in real app, this would be from your backend)
+      const checkoutData = {
+        line_items: [{
+          price_data: {
+            currency: 'jpy',
+            product_data: {
+              name: `${selectedTicket.name} - Moment Festival 2025`,
+              description: selectedTicket.description,
+            },
+            unit_amount: selectedTicket.price,
+          },
+          quantity: ticketQuantity,
+        }],
+        mode: 'payment',
+        success_url: `${STRIPE_SUCCESS_URL}?session_id={CHECKOUT_SESSION_ID}&type=${selectedTicketType}&qty=${ticketQuantity}`,
+        cancel_url: STRIPE_CANCEL_URL,
+      };
+      
+      // In a real app, you would send this to your backend to create a Stripe session
+      // For demo purposes, we'll simulate the Stripe Checkout flow
+      const mockStripeURL = `https://checkout.stripe.com/pay/cs_test_demo?${encodeURIComponent(JSON.stringify(checkoutData))}`;
+      
+      console.log('Opening Stripe Checkout with:', checkoutData);
+      
+      // Open Stripe Checkout in browser
+      const result = await WebBrowser.openBrowserAsync(mockStripeURL, {
+        dismissButtonStyle: 'close',
+        presentationStyle: WebBrowser.WebBrowserPresentationStyle.POPUP,
+        controlsColor: '#000',
+      });
+      
+      if (result.type === 'dismiss' || result.type === 'cancel') {
+        // Handle success case (in real app, you would check the URL for success parameters)
+        await handlePurchaseSuccess();
+      }
+      
+    } catch (error) {
+      console.error('Stripe Checkout Error:', error);
+      Alert.alert('エラー', 'チケット購入処理でエラーが発生しました。もう一度お試しください。');
+    } finally {
+      setPurchaseLoading(false);
+    }
+  };
+
+  const handlePurchaseSuccess = async () => {
+    try {
+      closeTicketModal();
+      
+      // Show success alert
+      Alert.alert(
+        '購入完了🎫', 
+        'ありがとうございました！\nチケットの詳細はメールでお送りします。',
+        [{ text: 'OK' }]
+      );
+      
+      // Optional: Push order to backend
+      try {
+        await axios.post(`${EXPO_BACKEND_URL}/api/ticket-reservation`, {
+          festival_id: festival?.id || 'moment-festival-2025',
+          name: 'Guest User',
+          email: 'guest@example.com',
+          phone: '090-0000-0000',
+          ticket_type: selectedTicketType,
+          quantity: ticketQuantity,
+        });
+        console.log('Order saved to backend');
+      } catch (backendError) {
+        console.warn('Failed to save order to backend:', backendError);
+      }
+      
+    } catch (error) {
+      console.error('Purchase success handling error:', error);
+    }
+  };
+
   if (loading && !refreshing) {
     return (
       <View style={styles.loadingContainer}>
