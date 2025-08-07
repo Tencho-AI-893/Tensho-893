@@ -251,23 +251,14 @@ export default function FestivalScreen() {
         cancel_url: STRIPE_CANCEL_URL,
       };
       
-      // In a real app, you would send this to your backend to create a Stripe session
-      // For demo purposes, we'll simulate the Stripe Checkout flow
-      const mockStripeURL = `https://checkout.stripe.com/pay/cs_test_demo?${encodeURIComponent(JSON.stringify(checkoutData))}`;
-      
+      // Simulate Stripe Checkout success after a delay
       console.log('Opening Stripe Checkout with:', checkoutData);
       
-      // Open Stripe Checkout in browser
-      const result = await WebBrowser.openBrowserAsync(mockStripeURL, {
-        dismissButtonStyle: 'close',
-        presentationStyle: WebBrowser.WebBrowserPresentationStyle.POPUP,
-        controlsColor: '#000',
-      });
+      // For demo purposes, we'll simulate the checkout process
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      if (result.type === 'dismiss' || result.type === 'cancel') {
-        // Handle success case (in real app, you would check the URL for success parameters)
-        await handlePurchaseSuccess();
-      }
+      // Simulate successful checkout
+      await handlePurchaseSuccess();
       
     } catch (error) {
       console.error('Stripe Checkout Error:', error);
@@ -284,23 +275,31 @@ export default function FestivalScreen() {
       // Show success alert
       Alert.alert(
         '購入完了🎫', 
-        'ありがとうございました！\nチケットの詳細はメールでお送りします。',
-        [{ text: 'OK' }]
+        `${ticketTypes[selectedTicketType].name} × ${ticketQuantity}枚\n合計：¥${calculateTotal().toLocaleString()}\n\nありがとうございました！\nチケットの詳細はメールでお送りします。`,
+        [{ 
+          text: 'OK',
+          onPress: () => {
+            console.log('Purchase completed successfully');
+          }
+        }]
       );
       
       // Optional: Push order to backend
       try {
-        await axios.post(`${EXPO_BACKEND_URL}/api/ticket-reservation`, {
+        const orderData = {
           festival_id: festival?.id || 'moment-festival-2025',
           name: 'Guest User',
-          email: 'guest@example.com',
+          email: 'guest@moment.example',
           phone: '090-0000-0000',
           ticket_type: selectedTicketType,
           quantity: ticketQuantity,
-        });
-        console.log('Order saved to backend');
+        };
+        
+        await axios.post(`${EXPO_BACKEND_URL}/api/ticket-reservation`, orderData);
+        console.log('✅ Order saved to backend:', orderData);
       } catch (backendError) {
-        console.warn('Failed to save order to backend:', backendError);
+        console.warn('⚠️ Failed to save order to backend:', backendError);
+        // Don't show error to user since payment was successful
       }
       
     } catch (error) {
