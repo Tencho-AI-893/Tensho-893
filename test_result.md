@@ -166,65 +166,65 @@ backend:
         comment: "✅ TESTED: POST /api/ticket-reservation endpoint working perfectly. Successfully creates reservations with correct price calculations (early_bird: ¥15000, regular: ¥18000, vip: ¥35000, family: ¥40000). Proper validation implemented - correctly rejects invalid festival IDs with 404 status. Tested with realistic Japanese user data (田中太郎, Japanese phone format)."
 
 frontend:
-  - task: "Main Navigation Structure"
+  - task: "Main Navigation Structure with expo-router"
+    implemented: true
+    working: "needs_testing"
+    file: "_layout.tsx, index.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Fixed NavigationContainer duplication error. Implemented expo-router Tabs navigation with 4 screens: Home, Festival, Profile, NFT. Manual testing shows all navigation working correctly."
+        
+  - task: "Home Screen UI"
     implemented: true
     working: "needs_testing"
     file: "index.tsx"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "needs_testing"
         agent: "main"
-        comment: "Bottom tab navigation implemented with 4 main screens - Home, Festival, Profile, NFT"
-        
-  - task: "Home Screen UI"
-    implemented: true
-    working: "needs_testing"
-    file: "screens/HomeScreen.tsx"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: "needs_testing"
-        agent: "main"
-        comment: "Home screen with hero section, philosophy cards, and CTA buttons implemented"
+        comment: "Home screen with DJ Senoh branding, philosophy cards, navigation info. Sound wave animation, responsive design. Manual screenshots confirm working state."
         
   - task: "Festival Screen with API integration"
     implemented: true
     working: "needs_testing"
-    file: "screens/FestivalScreen.tsx"
+    file: "festival.tsx"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "needs_testing"
         agent: "main"
-        comment: "Festival screen with complete API integration, venue info, sound system, family services, ticket info display"
+        comment: "Festival screen loads Moment Festival 2025 data via API. Shows venue info, sound system, family services, ticket pricing. Manual testing shows successful API integration."
         
   - task: "Profile Screen with API integration"
     implemented: true
     working: "needs_testing"
-    file: "screens/ProfileScreen.tsx"
+    file: "profile.tsx"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "needs_testing"
         agent: "main"
-        comment: "DJ Profile screen with timeline, philosophy, social links, complete API integration"
+        comment: "DJ Profile screen with complete API integration showing DJ Senoh data, timeline, philosophy, social links. Manual testing shows successful API calls."
         
-  - task: "NFT Gallery Screen"
+  - task: "NFT Gallery Screen with API integration"
     implemented: true
     working: "needs_testing"
-    file: "screens/NFTScreen.tsx"
+    file: "nft.tsx"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "needs_testing"
         agent: "main"
-        comment: "NFT gallery with modal detail view, rarity system, mock data display"
+        comment: "NFT gallery shows mock NFT collection via API. Modal detail view, rarity system, base64 images working. Manual testing shows successful data loading."
 
 metadata:
   created_by: "main_agent"
