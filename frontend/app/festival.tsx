@@ -436,8 +436,11 @@ export default function FestivalScreen() {
 
             {/* CTA Section */}
             <View style={styles.ctaSection}>
-              <TouchableOpacity style={styles.primaryCTA}>
-                <Text style={styles.ctaText}>チケットを予約する</Text>
+              <TouchableOpacity 
+                style={styles.primaryCTA}
+                onPress={openTicketModal}
+              >
+                <Text style={styles.ctaText}>チケット購入</Text>
                 <Ionicons name="ticket" size={24} color="#000" />
               </TouchableOpacity>
               
@@ -449,6 +452,114 @@ export default function FestivalScreen() {
           </>
         )}
       </ScrollView>
+
+      {/* Ticket Purchase Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={ticketModalVisible}
+        onRequestClose={closeTicketModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>チケット購入</Text>
+              <TouchableOpacity onPress={closeTicketModal}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Ticket Type Selection */}
+            <View style={styles.ticketSection}>
+              <Text style={styles.sectionLabel}>チケット種別</Text>
+              
+              <TouchableOpacity
+                style={[
+                  styles.ticketOption,
+                  selectedTicketType === 'general' && styles.ticketOptionSelected
+                ]}
+                onPress={() => setSelectedTicketType('general')}
+              >
+                <View style={styles.ticketOptionContent}>
+                  <Text style={styles.ticketOptionName}>一般チケット</Text>
+                  <Text style={styles.ticketOptionDescription}>スタンダード入場券</Text>
+                </View>
+                <Text style={styles.ticketOptionPrice}>¥3,000</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.ticketOption,
+                  selectedTicketType === 'vip' && styles.ticketOptionSelected
+                ]}
+                onPress={() => setSelectedTicketType('vip')}
+              >
+                <View style={styles.ticketOptionContent}>
+                  <Text style={styles.ticketOptionName}>VIPチケット</Text>
+                  <Text style={styles.ticketOptionDescription}>VIP特典付き入場券</Text>
+                </View>
+                <Text style={styles.ticketOptionPrice}>¥8,000</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Quantity Selection */}
+            <View style={styles.ticketSection}>
+              <Text style={styles.sectionLabel}>枚数</Text>
+              
+              <View style={styles.quantityContainer}>
+                <TouchableOpacity
+                  style={styles.quantityButton}
+                  onPress={() => adjustQuantity(-1)}
+                  disabled={ticketQuantity <= 1}
+                >
+                  <Ionicons name="remove" size={20} color={ticketQuantity <= 1 ? '#666' : '#fff'} />
+                </TouchableOpacity>
+                
+                <Text style={styles.quantityText}>{ticketQuantity}</Text>
+                
+                <TouchableOpacity
+                  style={styles.quantityButton}
+                  onPress={() => adjustQuantity(1)}
+                  disabled={ticketQuantity >= 10}
+                >
+                  <Ionicons name="add" size={20} color={ticketQuantity >= 10 ? '#666' : '#fff'} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Total */}
+            <View style={styles.totalSection}>
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>
+                  {ticketTypes[selectedTicketType].name} × {ticketQuantity}
+                </Text>
+                <Text style={styles.totalAmount}>¥{calculateTotal().toLocaleString()}</Text>
+              </View>
+            </View>
+
+            {/* Purchase Button */}
+            <TouchableOpacity
+              style={[styles.purchaseButton, purchaseLoading && styles.purchaseButtonDisabled]}
+              onPress={handleStripeCheckout}
+              disabled={purchaseLoading}
+            >
+              {purchaseLoading ? (
+                <ActivityIndicator size="small" color="#000" />
+              ) : (
+                <>
+                  <Text style={styles.purchaseButtonText}>購入へ進む</Text>
+                  <Ionicons name="card" size={20} color="#000" />
+                </>
+              )}
+            </TouchableOpacity>
+
+            <Text style={styles.paymentNote}>
+              Stripe Checkout で安全にお支払いいただけます
+            </Text>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
