@@ -609,6 +609,18 @@ const styles = StyleSheet.create({
     padding: 8,
     marginLeft: 10,
   },
+  projectNote: {
+    fontSize: 12,
+    color: '#60a5fa',
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
+  tokenNote: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
   testButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: 16,
