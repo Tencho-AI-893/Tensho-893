@@ -1,6 +1,8 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { ToastProvider } from './context/ToastContext';
+import { LoadingProvider } from './context/LoadingContext';
 
 export default function TabLayout() {
   return (
