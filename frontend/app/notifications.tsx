@@ -302,6 +302,13 @@ export default function NotificationsScreen() {
           <Text style={styles.sectionTitle}>📋 許可状態</Text>
           <View style={styles.statusCard}>
             <View style={styles.statusRow}>
+              <Text style={styles.statusLabel}>EAS Project ID:</Text>
+              <Text style={[styles.statusValue, !projectId && styles.missingValue]}>
+                {projectId || '未設定'}
+              </Text>
+            </View>
+            
+            <View style={styles.statusRow}>
               <Text style={styles.statusLabel}>通知許可:</Text>
               <View style={[styles.statusBadge, { backgroundColor: getStatusColor(permissionStatus) }]}>
                 <Text style={styles.statusText}>{getStatusText(permissionStatus)}</Text>
