@@ -31,6 +31,7 @@ const EXPO_PUSH_TOKEN_KEY = 'expo_push_token';
 
 export default function NotificationsScreen() {
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
+  const [projectId, setProjectId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [permissionStatus, setPermissionStatus] = useState<string>('unknown');
   const { showToast } = useToast();
