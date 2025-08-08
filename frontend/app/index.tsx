@@ -17,6 +17,38 @@ import { PhilosophyCardSkeleton } from './components/SkeletonLoader';
 
 const { width, height } = Dimensions.get('window');
 
+interface PhilosophyCard {
+  id: string;
+  icon: string;
+  title: string;
+  description: string;
+  color: string;
+}
+
+const philosophyCards: PhilosophyCard[] = [
+  {
+    id: 'meditation',
+    icon: '🧘',
+    title: '瞑想的体験',
+    description: '音楽を通じて深い集中状態へと導き、内なる平静を見つける',
+    color: 'rgba(96, 165, 250, 0.3)',
+  },
+  {
+    id: 'awareness',
+    icon: '👁️',
+    title: '瞬間の認識',
+    description: '今この瞬間の価値を意識し、時間の流れに敏感になる',
+    color: 'rgba(52, 211, 153, 0.3)',
+  },
+  {
+    id: 'permanence',
+    icon: '♾️',
+    title: '永続的価値',
+    description: '一瞬の体験をNFTとして記録し、未来へと継承する',
+    color: 'rgba(167, 139, 250, 0.3)',
+  },
+];
+
 const SoundWave = () => {
   return (
     <View style={styles.soundWave}>
@@ -34,6 +66,42 @@ const SoundWave = () => {
 };
 
 export default function HomeScreen() {
+  const [isLoadingCards, setIsLoadingCards] = useState(true);
+  const { showToast } = useToast();
+  const { isLoading, debouncedAction } = useLoading();
+  const router = useRouter();
+
+  // Simulate loading cards on mount
+  useEffect(() => {
+    const loadCards = setTimeout(() => {
+      setIsLoadingCards(false);
+    }, 2000);
+
+    return () => clearTimeout(loadCards);
+  }, []);
+
+  // Debounced card press handler
+  const handleCardPress = debouncedAction(
+    'philosophy-card',
+    async (cardId: string, title: string) => {
+      showToast('info', `${title}の詳細画面に移動中...`);
+      
+      // Simulate navigation delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      if (cardId === 'meditation') {
+        // Navigate to meditation experience
+        router.push('/experience/index' as any);
+      } else {
+        showToast('info', `${title}の詳細は次のバージョンで実装されます`);
+      }
+    },
+    {
+      loadingMessage: '読み込み中...',
+      delay: 300,
+    }
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -55,29 +123,41 @@ export default function HomeScreen() {
           <Text style={styles.sectionTitle}>哲学 PHILOSOPHY</Text>
           
           <View style={styles.cardGrid}>
-            <View style={[styles.glassCard, styles.cardBlue]}>
-              <Text style={styles.cardIcon}>🧘</Text>
-              <Text style={styles.cardTitle}>瞑想的体験</Text>
-              <Text style={styles.cardDescription}>
-                音楽を通じて深い集中状態へと導き、内なる平静を見つける
-              </Text>
-            </View>
-            
-            <View style={[styles.glassCard, styles.cardGreen]}>
-              <Text style={styles.cardIcon}>👁️</Text>
-              <Text style={styles.cardTitle}>瞬間の認識</Text>
-              <Text style={styles.cardDescription}>
-                今この瞬間の価値を意識し、時間の流れに敏感になる
-              </Text>
-            </View>
-            
-            <View style={[styles.glassCard, styles.cardPurple]}>
-              <Text style={styles.cardIcon}>♾️</Text>
-              <Text style={styles.cardTitle}>永続的価値</Text>
-              <Text style={styles.cardDescription}>
-                一瞬の体験をNFTとして記録し、未来へと継承する
-              </Text>
-            </View>
+            {isLoadingCards ? (
+              // Show skeleton loaders
+              <>
+                <PhilosophyCardSkeleton />
+                <PhilosophyCardSkeleton />
+                <PhilosophyCardSkeleton />
+              </>
+            ) : (
+              // Show actual cards
+              philosophyCards.map((card) => (
+                <TouchableOpacity
+                  key={card.id}
+                  style={[
+                    styles.glassCard,
+                    { borderColor: card.color },
+                    isLoading('philosophy-card') && styles.cardDisabled
+                  ]}
+                  onPress={() => handleCardPress(card.id, card.title)}
+                  disabled={isLoading('philosophy-card')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.cardIcon}>{card.icon}</Text>
+                  <Text style={styles.cardTitle}>{card.title}</Text>
+                  <Text style={styles.cardDescription}>
+                    {card.description}
+                  </Text>
+                  
+                  {isLoading('philosophy-card') && (
+                    <View style={styles.cardLoadingOverlay}>
+                      <ActivityIndicator size="small" color="#fff" />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))
+            )}
           </View>
         </View>
 
