@@ -88,6 +88,20 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          title: '通知',
+          headerTitle: '通知テスト',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons 
+              name={focused ? 'notifications' : 'notifications-outline'} 
+              size={size} 
+              color={color} 
+            />
+          ),
+        }}
+      />
     </Tabs>
   );
 }
