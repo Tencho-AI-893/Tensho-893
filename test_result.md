@@ -284,6 +284,7 @@ test_plan:
     - "Home Screen UI with Global Loading & Toast"
     - "Festival Screen with API integration and Loading States"
     - "Meditation Experience Detail Screen"
+    - "Push Notifications with expo-notifications"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
