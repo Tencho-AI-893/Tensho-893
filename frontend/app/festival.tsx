@@ -256,12 +256,14 @@ export default function FestivalScreen() {
     return ticketTypes[selectedTicketType].price * ticketQuantity;
   };
 
-  const handleStripeCheckout = async () => {
-    try {
-      setPurchaseLoading(true);
-      
+  const handleStripeCheckout = debouncedAction(
+    'stripe-checkout',
+    async () => {
       const selectedTicket = ticketTypes[selectedTicketType];
       const totalAmount = calculateTotal();
+      
+      // Show loading toast while processing
+      showToast('loading', 'Stripe Checkout を開いています...');
       
       // Create mock Stripe Checkout URL (in real app, this would be from your backend)
       const checkoutData = {
@@ -289,14 +291,14 @@ export default function FestivalScreen() {
       
       // Simulate successful checkout
       await handlePurchaseSuccess();
-      
-    } catch (error) {
-      console.error('Stripe Checkout Error:', error);
-      Alert.alert('エラー', 'チケット購入処理でエラーが発生しました。もう一度お試しください。');
-    } finally {
-      setPurchaseLoading(false);
+    },
+    {
+      loadingMessage: 'チケット購入を処理中...',
+      successMessage: 'チケット購入が完了しました！',
+      errorMessage: 'チケット購入でエラーが発生しました。もう一度お試しください。',
+      delay: 500,
     }
-  };
+  );
 
   const handlePurchaseSuccess = async () => {
     try {
