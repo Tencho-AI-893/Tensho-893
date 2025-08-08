@@ -339,6 +339,30 @@ export default function NotificationsScreen() {
           )}
         </View>
 
+        {/* EAS Project Info */}
+        {projectId && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🔗 EAS プロジェクト情報</Text>
+            <View style={styles.tokenCard}>
+              <Text style={styles.tokenLabel}>Project ID:</Text>
+              <View style={styles.tokenContainer}>
+                <Text style={styles.tokenText} numberOfLines={2}>
+                  {projectId}
+                </Text>
+                <TouchableOpacity
+                  style={styles.copyButton}
+                  onPress={() => copyTokenToClipboard('project-id', projectId)}
+                >
+                  <Ionicons name="copy" size={16} color="#60a5fa" />
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.projectNote}>
+                このプロジェクトIDでEAS Build および Push Notifications が利用可能です。
+              </Text>
+            </View>
+          </View>
+        )}
+
         {/* Push Token */}
         {expoPushToken && (
           <View style={styles.section}>
@@ -351,11 +375,14 @@ export default function NotificationsScreen() {
                 </Text>
                 <TouchableOpacity
                   style={styles.copyButton}
-                  onPress={copyTokenToClipboard}
+                  onPress={() => copyTokenToClipboard('push-token', expoPushToken)}
                 >
                   <Ionicons name="copy" size={16} color="#60a5fa" />
                 </TouchableOpacity>
               </View>
+              <Text style={styles.tokenNote}>
+                このトークンでデバイスに直接プッシュ通知を送信できます。
+              </Text>
             </View>
           </View>
         )}
