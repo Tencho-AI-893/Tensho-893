@@ -107,5 +107,7 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+      </LoadingProvider>
+    </ToastProvider>
   );
 }
