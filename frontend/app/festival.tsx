@@ -196,20 +196,36 @@ export default function FestivalScreen() {
     fetchFestivalData();
   }, []);
 
-  const handleTicketPress = (ticketType: string, price: number) => {
-    Alert.alert(
-      'チケット予約',
-      `${ticketType}チケット (¥${price.toLocaleString()}) を予約しますか？`,
-      [
-        { text: 'キャンセル', style: 'cancel' },
-        { text: '予約する', onPress: () => navigateToTicketForm(ticketType) }
-      ]
-    );
-  };
+  const handleTicketPress = debouncedAction(
+    'ticket-press',
+    async (ticketType: string, price: number) => {
+      showToast('info', `${ticketType}チケットの詳細を表示中...`);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      Alert.alert(
+        'チケット予約',
+        `${ticketType}チケット (¥${price.toLocaleString()}) を予約しますか？`,
+        [
+          { text: 'キャンセル', style: 'cancel' },
+          { text: '予約する', onPress: () => navigateToTicketForm(ticketType) }
+        ]
+      );
+    },
+    {
+      loadingMessage: 'チケット情報を読み込み中...',
+      delay: 300,
+    }
+  );
 
-  const navigateToTicketForm = (ticketType: string) => {
-    Alert.alert('実装予定', 'チケット予約フォームは次のバージョンで実装されます');
-  };
+  const navigateToTicketForm = debouncedAction(
+    'ticket-form',
+    async (ticketType: string) => {
+      showToast('info', 'チケット予約フォームは次のバージョンで実装されます');
+    },
+    {
+      delay: 300,
+    }
+  );
 
   // Ticket Purchase Functions
   const openTicketModal = () => {
