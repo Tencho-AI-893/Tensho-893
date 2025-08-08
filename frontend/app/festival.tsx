@@ -487,11 +487,21 @@ export default function FestivalScreen() {
             {/* CTA Section */}
             <View style={styles.ctaSection}>
               <TouchableOpacity 
-                style={styles.primaryCTA}
+                style={[
+                  styles.primaryCTA,
+                  isLoading('ticket-modal') && styles.ctaDisabled
+                ]}
                 onPress={openTicketModal}
+                disabled={isLoading('ticket-modal')}
               >
-                <Text style={styles.ctaText}>チケット購入</Text>
-                <Ionicons name="ticket" size={24} color="#000" />
+                {isLoading('ticket-modal') ? (
+                  <ActivityIndicator size="small" color="#000" />
+                ) : (
+                  <>
+                    <Text style={styles.ctaText}>チケット購入</Text>
+                    <Ionicons name="ticket" size={24} color="#000" />
+                  </>
+                )}
               </TouchableOpacity>
               
               <TouchableOpacity style={styles.secondaryCTA}>
