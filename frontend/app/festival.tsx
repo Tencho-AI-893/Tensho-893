@@ -859,6 +859,10 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 25,
   },
+  ctaDisabled: {
+    backgroundColor: '#666',
+    opacity: 0.6,
+  },
   ctaText: {
     color: '#000',
     fontSize: 16,
