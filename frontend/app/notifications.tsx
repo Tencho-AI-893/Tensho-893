@@ -1,174 +1,268 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Alert,
-  ActivityIndicator,
   Platform,
+  ActivityIndicator,
+  Clipboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { NotificationService, FestivalNotifications } from './services/NotificationService';
+import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useToast } from './context/ToastContext';
+import { useLoading } from './context/LoadingContext';
+
+// Configure notification handling
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
+const EXPO_PUSH_TOKEN_KEY = 'expo_push_token';
 
 export default function NotificationsScreen() {
-  const [pushToken, setPushToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [initLoading, setInitLoading] = useState(true);
+  const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [permissionStatus, setPermissionStatus] = useState<string>('unknown');
+  const { showToast } = useToast();
+  const { debouncedAction } = useLoading();
+
+  const notificationListener = useRef<Notifications.Subscription>();
+  const responseListener = useRef<Notifications.Subscription>();
 
   useEffect(() => {
     initializeNotifications();
-    setupNotificationListeners();
+
+    // Notification listeners
+    notificationListener.current = Notifications.addNotificationReceivedListener(
+      (notification) => {
+        console.log('📱 Notification received:', notification);
+        showToast('success', 'プッシュ通知を受信しました！');
+      }
+    );
+
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        console.log('🔔 Notification tapped:', response);
+        showToast('info', '通知をタップしました');
+      }
+    );
+
+    return () => {
+      if (notificationListener.current) {
+        Notifications.removeNotificationSubscription(notificationListener.current);
+      }
+      if (responseListener.current) {
+        Notifications.removeNotificationSubscription(responseListener.current);
+      }
+    };
   }, []);
 
   const initializeNotifications = async () => {
     try {
-      setInitLoading(true);
-      const result = await NotificationService.initializeNotifications();
+      setIsLoading(true);
+
+      // Check if device supports push notifications
+      if (!Device.isDevice) {
+        setPermissionStatus('simulator');
+        showToast('info', 'シミュレータではプッシュ通知は利用できません');
+        return;
+      }
+
+      // Check existing permissions
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      setPermissionStatus(existingStatus);
       
-      if (result.success && result.token) {
-        setPushToken(result.token);
-        setPermissionStatus('granted');
+      let finalStatus = existingStatus;
+
+      // Request permissions if not granted
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+        setPermissionStatus(status);
+      }
+
+      if (finalStatus !== 'granted') {
+        showToast('error', 'プッシュ通知の許可が必要です');
+        return;
+      }
+
+      // Get Expo push token
+      const storedToken = await AsyncStorage.getItem(EXPO_PUSH_TOKEN_KEY);
+      if (storedToken) {
+        setExpoPushToken(storedToken);
+        showToast('success', 'プッシュトークンを復元しました');
       } else {
-        setPermissionStatus('denied');
-        Alert.alert('通知設定', result.message);
+        await generatePushToken();
       }
     } catch (error) {
-      console.error('Error initializing notifications:', error);
-      setPermissionStatus('error');
+      console.error('Notification initialization error:', error);
+      showToast('error', '通知の初期化でエラーが発生しました');
     } finally {
-      setInitLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const setupNotificationListeners = () => {
-    return NotificationService.setupNotificationListeners();
-  };
-
-  const sendTestPush = async () => {
-    if (!pushToken) {
-      Alert.alert('エラー', 'プッシュトークンが取得できていません');
-      return;
-    }
-
+  const generatePushToken = async () => {
     try {
-      setLoading(true);
-      const success = await NotificationService.sendTestPushNotification(pushToken);
+      const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
       
-      if (success) {
-        Alert.alert('送信完了', 'テスト通知を送信しました！');
-      } else {
-        Alert.alert('送信失敗', '通知の送信に失敗しました');
+      if (!projectId) {
+        throw new Error('Project ID not found in configuration');
       }
-    } catch (error) {
-      console.error('Error sending test push:', error);
-      Alert.alert('エラー', '送信中にエラーが発生しました');
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const sendLocalNotification = async () => {
-    try {
-      await NotificationService.sendLocalNotification(
-        '🎵 ローカル通知テスト',
-        'これはローカル通知のテストです'
-      );
-      Alert.alert('送信完了', 'ローカル通知を送信しました！');
-    } catch (error) {
-      console.error('Error sending local notification:', error);
-    }
-  };
-
-  const sendTicketConfirmation = async () => {
-    if (!pushToken) {
-      Alert.alert('エラー', 'プッシュトークンが取得できていません');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const success = await FestivalNotifications.sendTicketPurchaseConfirmation(
-        pushToken,
-        'VIPチケット',
-        2
-      );
+      const tokenData = await Notifications.getExpoPushTokenAsync({
+        projectId: projectId,
+      });
       
-      if (success) {
-        Alert.alert('送信完了', 'チケット購入確認通知を送信しました！');
-      } else {
-        Alert.alert('送信失敗', '通知の送信に失敗しました');
-      }
-    } catch (error) {
-      console.error('Error sending ticket confirmation:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const sendFestivalReminder = async () => {
-    if (!pushToken) {
-      Alert.alert('エラー', 'プッシュトークンが取得できていません');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const success = await FestivalNotifications.sendFestivalReminder(pushToken);
+      const token = tokenData.data;
+      setExpoPushToken(token);
       
-      if (success) {
-        Alert.alert('送信完了', 'フェスティバルリマインダーを送信しました！');
-      } else {
-        Alert.alert('送信失敗', '通知の送信に失敗しました');
-      }
+      // Store token for future use
+      await AsyncStorage.setItem(EXPO_PUSH_TOKEN_KEY, token);
+      
+      showToast('success', 'プッシュトークンを生成しました');
+      console.log('📱 Expo Push Token:', token);
+      
+      return token;
     } catch (error) {
-      console.error('Error sending festival reminder:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error generating push token:', error);
+      showToast('error', 'プッシュトークンの生成に失敗しました');
+      throw error;
     }
   };
 
-  const clearToken = async () => {
-    Alert.alert(
-      'トークンクリア',
-      'プッシュトークンをクリアしますか？',
-      [
-        { text: 'キャンセル', style: 'cancel' },
-        {
-          text: 'クリア',
-          style: 'destructive',
-          onPress: async () => {
-            await NotificationService.clearStoredToken();
-            setPushToken(null);
-            setPermissionStatus('unknown');
-            Alert.alert('完了', 'プッシュトークンをクリアしました');
-          },
+  const handleRequestPermissions = debouncedAction(
+    'request-permissions',
+    async () => {
+      const { status } = await Notifications.requestPermissionsAsync();
+      setPermissionStatus(status);
+      
+      if (status === 'granted') {
+        await generatePushToken();
+      }
+    },
+    {
+      loadingMessage: '通知許可をリクエスト中...',
+      successMessage: '通知許可が取得されました！',
+      errorMessage: '通知許可の取得に失敗しました',
+      delay: 500,
+    }
+  );
+
+  const sendLocalNotification = debouncedAction(
+    'local-notification',
+    async () => {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "DJ Senoh - Moment Music 🎵",
+          body: "ローカル通知のテストです。瞑想的な音楽体験をお楽しみください。",
+          data: { screen: 'notifications', type: 'local_test' },
+          sound: true,
         },
-      ]
-    );
-  };
+        trigger: { seconds: 1 },
+      });
+    },
+    {
+      loadingMessage: 'ローカル通知を送信中...',
+      successMessage: 'ローカル通知を送信しました！',
+      errorMessage: 'ローカル通知の送信に失敗しました',
+      delay: 300,
+    }
+  );
 
-  const copyTokenToClipboard = () => {
-    if (pushToken) {
-      // In a real app, you would use @react-native-clipboard/clipboard
-      Alert.alert(
-        'プッシュトークン',
-        pushToken,
-        [{ text: 'OK' }]
-      );
+  const sendExpoPushNotification = debouncedAction(
+    'expo-push',
+    async () => {
+      if (!expoPushToken) {
+        throw new Error('プッシュトークンがありません');
+      }
+
+      const message = {
+        to: expoPushToken,
+        sound: 'default',
+        title: 'DJ Senoh - Moment Music 🎶',
+        body: 'Expo Push通知のテストです。音楽と自然の調和を体験してください。',
+        data: { screen: 'notifications', type: 'expo_push' },
+      };
+
+      const response = await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Accept-encoding': 'gzip, deflate',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(message),
+      });
+
+      const result = await response.json();
+      console.log('📤 Push notification result:', result);
+
+      if (result.data?.[0]?.status === 'error') {
+        throw new Error(result.data[0].message || 'プッシュ送信でエラーが発生しました');
+      }
+    },
+    {
+      loadingMessage: 'Expo Push通知を送信中...',
+      successMessage: 'Push通知を送信しました！数秒でお届けします。',
+      errorMessage: 'Push通知の送信に失敗しました',
+      delay: 500,
+    }
+  );
+
+  const copyTokenToClipboard = debouncedAction(
+    'copy-token',
+    async () => {
+      if (expoPushToken) {
+        await Clipboard.setStringAsync(expoPushToken);
+      }
+    },
+    {
+      successMessage: 'トークンをクリップボードにコピーしました',
+      delay: 200,
+    }
+  );
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'granted': return '#4ade80';
+      case 'denied': return '#ef4444';
+      case 'simulator': return '#f59e0b';
+      default: return '#6b7280';
     }
   };
 
-  if (initLoading) {
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'granted': return '許可済み';
+      case 'denied': return '拒否';
+      case 'simulator': return 'シミュレータ';
+      case 'undetermined': return '未確認';
+      default: return '不明';
+    }
+  };
+
+  const isWebOrNoToken = Platform.OS === 'web' || !expoPushToken;
+  const canSendPush = permissionStatus === 'granted' && expoPushToken && !isWebOrNoToken;
+
+  if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#fff" />
-        <Text style={styles.loadingText}>通知を初期化中...</Text>
-      </View>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#fff" />
+          <Text style={styles.loadingText}>通知システムを初期化中...</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -177,136 +271,159 @@ export default function NotificationsScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>🔔 通知テスト</Text>
-          <Text style={styles.headerSubtitle}>プッシュ通知のテスト機能</Text>
+          <Text style={styles.title}>プッシュ通知テスト</Text>
+          <Text style={styles.subtitle}>
+            Expo Push Notifications の動作確認
+          </Text>
         </View>
 
-        {/* Device Info */}
+        {/* Permission Status */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📱 デバイス情報</Text>
-          <View style={styles.infoCard}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>デバイス:</Text>
-              <Text style={styles.infoValue}>
+          <Text style={styles.sectionTitle}>📋 許可状態</Text>
+          <View style={styles.statusCard}>
+            <View style={styles.statusRow}>
+              <Text style={styles.statusLabel}>通知許可:</Text>
+              <View style={[styles.statusBadge, { backgroundColor: getStatusColor(permissionStatus) }]}>
+                <Text style={styles.statusText}>{getStatusText(permissionStatus)}</Text>
+              </View>
+            </View>
+            
+            <View style={styles.statusRow}>
+              <Text style={styles.statusLabel}>プラットフォーム:</Text>
+              <Text style={styles.statusValue}>{Platform.OS}</Text>
+            </View>
+            
+            <View style={styles.statusRow}>
+              <Text style={styles.statusLabel}>デバイス:</Text>
+              <Text style={styles.statusValue}>
                 {Device.isDevice ? '実機' : 'シミュレータ'}
               </Text>
             </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>プラットフォーム:</Text>
-              <Text style={styles.infoValue}>{Platform.OS}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>通知許可:</Text>
-              <Text style={[
-                styles.infoValue,
-                { color: permissionStatus === 'granted' ? '#4ade80' : '#f87171' }
-              ]}>
-                {permissionStatus === 'granted' ? '許可済み' : '未許可'}
-              </Text>
-            </View>
           </View>
+
+          {permissionStatus !== 'granted' && (
+            <TouchableOpacity
+              style={styles.permissionButton}
+              onPress={handleRequestPermissions}
+            >
+              <Ionicons name="notifications" size={20} color="#000" />
+              <Text style={styles.permissionButtonText}>通知許可をリクエスト</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Push Token */}
-        {pushToken && (
+        {expoPushToken && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>🔑 プッシュトークン</Text>
-            <TouchableOpacity style={styles.tokenCard} onPress={copyTokenToClipboard}>
-              <Text style={styles.tokenText} numberOfLines={3}>
-                {pushToken}
-              </Text>
-              <Ionicons name="copy" size={20} color="#666" />
-            </TouchableOpacity>
-            <Text style={styles.tokenHint}>タップしてトークンを表示</Text>
+            <View style={styles.tokenCard}>
+              <Text style={styles.tokenLabel}>Expo Push Token:</Text>
+              <View style={styles.tokenContainer}>
+                <Text style={styles.tokenText} numberOfLines={3}>
+                  {expoPushToken}
+                </Text>
+                <TouchableOpacity
+                  style={styles.copyButton}
+                  onPress={copyTokenToClipboard}
+                >
+                  <Ionicons name="copy" size={16} color="#60a5fa" />
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         )}
 
-        {/* Test Buttons */}
+        {/* Test Actions */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🧪 通知テスト</Text>
+          <Text style={styles.sectionTitle}>🧪 テストアクション</Text>
           
+          {/* Local Notification */}
           <TouchableOpacity
-            style={[styles.testButton, styles.primaryButton]}
+            style={styles.testButton}
             onPress={sendLocalNotification}
-            disabled={loading}
           >
-            <Ionicons name="phone-portrait" size={20} color="#000" />
-            <Text style={styles.primaryButtonText}>ローカル通知テスト</Text>
+            <View style={styles.testButtonContent}>
+              <Ionicons name="phone-portrait" size={24} color="#4ade80" />
+              <View style={styles.testButtonText}>
+                <Text style={styles.testButtonTitle}>ローカル通知テスト</Text>
+                <Text style={styles.testButtonDescription}>
+                  デバイス内で通知を生成（Web対応）
+                </Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#fff" />
           </TouchableOpacity>
 
+          {/* Expo Push Notification */}
           <TouchableOpacity
-            style={[styles.testButton, styles.secondaryButton]}
-            onPress={sendTestPush}
-            disabled={loading || !pushToken}
+            style={[
+              styles.testButton,
+              !canSendPush && styles.testButtonDisabled
+            ]}
+            onPress={canSendPush ? sendExpoPushNotification : undefined}
+            disabled={!canSendPush}
           >
-            {loading ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Ionicons name="cloud" size={20} color="#fff" />
-            )}
-            <Text style={styles.secondaryButtonText}>プッシュ通知テスト</Text>
+            <View style={styles.testButtonContent}>
+              <Ionicons 
+                name="cloud" 
+                size={24} 
+                color={canSendPush ? "#60a5fa" : "#666"} 
+              />
+              <View style={styles.testButtonText}>
+                <Text style={[
+                  styles.testButtonTitle,
+                  !canSendPush && styles.disabledText
+                ]}>
+                  Expo Push通知テスト
+                </Text>
+                <Text style={[
+                  styles.testButtonDescription,
+                  !canSendPush && styles.disabledText
+                ]}>
+                  {isWebOrNoToken 
+                    ? 'iOS/Android実機でのみ利用可能' 
+                    : 'Expo Push サービス経由で送信'
+                  }
+                </Text>
+              </View>
+            </View>
+            <Ionicons 
+              name="chevron-forward" 
+              size={20} 
+              color={canSendPush ? "#fff" : "#666"} 
+            />
           </TouchableOpacity>
         </View>
 
-        {/* Festival Notifications */}
+        {/* Setup Guide */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🎵 フェスティバル通知</Text>
-          
-          <TouchableOpacity
-            style={[styles.testButton, styles.festivalButton]}
-            onPress={sendTicketConfirmation}
-            disabled={loading || !pushToken}
-          >
-            <Ionicons name="ticket" size={20} color="#000" />
-            <Text style={styles.festivalButtonText}>チケット購入確認</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.testButton, styles.reminderButton]}
-            onPress={sendFestivalReminder}
-            disabled={loading || !pushToken}
-          >
-            <Ionicons name="calendar" size={20} color="#000" />
-            <Text style={styles.reminderButtonText}>フェスリマインダー</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Instructions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📝 テスト手順</Text>
-          <View style={styles.instructionsCard}>
-            <Text style={styles.instructionStep}>1. 実機での動作確認が推奨されます</Text>
-            <Text style={styles.instructionStep}>2. 通知許可を確認してください</Text>
-            <Text style={styles.instructionStep}>3. ローカル通知は即座に표示されます</Text>
-            <Text style={styles.instructionStep}>4. プッシュ通知は数秒後に到着します</Text>
-            <Text style={styles.instructionStep}>5. バックグラウンドでも受信できます</Text>
+          <Text style={styles.sectionTitle}>📱 デバイステスト手順</Text>
+          <View style={styles.guideCard}>
+            <Text style={styles.guideTitle}>実機テスト（推奨）:</Text>
+            <Text style={styles.guideStep}>
+              1. Expo Go アプリをインストール
+            </Text>
+            <Text style={styles.guideStep}>
+              2. QRコードでアプリを起動
+            </Text>
+            <Text style={styles.guideStep}>
+              3. 通知許可をタップして「許可」
+            </Text>
+            <Text style={styles.guideStep}>
+              4. プッシュトークンが生成されることを確認
+            </Text>
+            <Text style={styles.guideStep}>
+              5. 両方のテストボタンを試す
+            </Text>
+            
+            <Text style={styles.guideTitle}>Web/シミュレータ:</Text>
+            <Text style={styles.guideStep}>
+              • ローカル通知のみ利用可能
+            </Text>
+            <Text style={styles.guideStep}>
+              • Push通知ボタンは無効化される
+            </Text>
           </View>
-        </View>
-
-        {/* Debug Actions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🔧 デバッグ</Text>
-          
-          <TouchableOpacity
-            style={[styles.testButton, styles.dangerButton]}
-            onPress={clearToken}
-          >
-            <Ionicons name="refresh" size={20} color="#fff" />
-            <Text style={styles.dangerButtonText}>トークンをクリア</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.testButton, styles.debugButton]}
-            onPress={initializeNotifications}
-            disabled={initLoading}
-          >
-            {initLoading ? (
-              <ActivityIndicator size="small" color="#000" />
-            ) : (
-              <Ionicons name="settings" size={20} color="#000" />
-            )}
-            <Text style={styles.debugButtonText}>通知を再初期化</Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -323,7 +440,6 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#000',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -334,24 +450,24 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingVertical: 40,
+    paddingVertical: 30,
     alignItems: 'center',
   },
-  headerTitle: {
+  title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#fff',
     textAlign: 'center',
     marginBottom: 10,
   },
-  headerSubtitle: {
+  subtitle: {
     fontSize: 16,
-    color: '#ccc',
+    color: '#999',
     textAlign: 'center',
   },
   section: {
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    marginBottom: 30,
   },
   sectionTitle: {
     fontSize: 20,
@@ -359,126 +475,136 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginBottom: 15,
   },
-  infoCard: {
+  statusCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 12,
-    padding: 15,
+    borderRadius: 16,
+    padding: 20,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
+    gap: 12,
   },
-  infoRow: {
+  statusRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
   },
-  infoLabel: {
-    fontSize: 14,
-    color: '#999',
+  statusLabel: {
+    color: '#ccc',
+    fontSize: 16,
   },
-  infoValue: {
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusText: {
+    color: '#000',
     fontSize: 14,
+    fontWeight: 'bold',
+  },
+  statusValue: {
     color: '#fff',
+    fontSize: 16,
     fontWeight: '600',
+  },
+  permissionButton: {
+    backgroundColor: '#ffc107',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    marginTop: 15,
+    gap: 8,
+  },
+  permissionButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   tokenCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 12,
-    padding: 15,
+    borderRadius: 16,
+    padding: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(96, 165, 250, 0.3)',
+  },
+  tokenLabel: {
+    color: '#60a5fa',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  tokenContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   tokenText: {
     flex: 1,
-    fontSize: 12,
     color: '#ccc',
-    fontFamily: 'monospace',
-  },
-  tokenHint: {
     fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
-    marginTop: 8,
-    fontStyle: 'italic',
+    fontFamily: 'monospace',
+    lineHeight: 16,
+  },
+  copyButton: {
+    padding: 8,
+    marginLeft: 10,
   },
   testButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 15,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  primaryButton: {
-    backgroundColor: '#fff',
-  },
-  primaryButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 8,
-  },
-  secondaryButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  secondaryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 8,
-  },
-  festivalButton: {
-    backgroundColor: '#4ade80',
-  },
-  festivalButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 8,
-  },
-  reminderButton: {
-    backgroundColor: '#60a5fa',
-  },
-  reminderButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 8,
-  },
-  dangerButton: {
-    backgroundColor: '#f87171',
-  },
-  dangerButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 8,
-  },
-  debugButton: {
-    backgroundColor: '#fbbf24',
-  },
-  debugButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 8,
-  },
-  instructionsCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 12,
-    padding: 15,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
-  instructionStep: {
+  testButtonDisabled: {
+    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  testButtonContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  testButtonText: {
+    marginLeft: 15,
+    flex: 1,
+  },
+  testButtonTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  testButtonDescription: {
+    color: '#999',
     fontSize: 14,
-    color: '#ccc',
+  },
+  disabledText: {
+    color: '#666',
+  },
+  guideCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 193, 7, 0.3)',
+  },
+  guideTitle: {
+    color: '#ffc107',
+    fontSize: 16,
+    fontWeight: 'bold',
     marginBottom: 8,
+    marginTop: 12,
+  },
+  guideStep: {
+    color: '#ccc',
+    fontSize: 14,
     lineHeight: 20,
+    marginBottom: 4,
   },
 });
