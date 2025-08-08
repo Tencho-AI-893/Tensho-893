@@ -1,13 +1,18 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "DJ Senoh - Moment Music Experience",
+    "slug": "dj-senoh-moment-music",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "frontend",
+    "scheme": "moment-music",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "extra": {
+      "eas": {
+        "projectId": "e02ee732-68ae-458b-978f-7ee30ee15275"
+      }
+    },
     "ios": {
       "supportsTablet": true
     },
