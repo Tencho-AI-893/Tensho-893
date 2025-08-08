@@ -259,17 +259,17 @@ frontend:
         agent: "main"
         comment: "Implemented global loading state management with debounced actions to prevent duplicate taps. Features loading indicators, success/error handling, and integration with toast notifications."
 
-  - task: "Meditation Experience Detail Screen"
+  - task: "Push Notifications with expo-notifications"
     implemented: true
     working: "needs_testing"
-    file: "experience/index.tsx"
+    file: "notifications.tsx"
     stuck_count: 0
-    priority: "medium"
+    priority: "high"
     needs_retesting: true
     status_history:
       - working: "needs_testing"
         agent: "main"
-        comment: "Created detailed meditation experience screen with navigation from Home philosophy cards. Features step-by-step meditation guide, tips, and professional design."
+        comment: "Implemented comprehensive push notifications system with expo-notifications. Features: permission request & storage of Expo push token, local notification test (web/preview fallback), real push test (iOS/Android) using Expo /push/send service, debounced actions with toast feedback, web/no token handling with disabled buttons and explanatory tooltips. Full UX with non-blocking toasts and device testing guide included."
 
 metadata:
   created_by: "main_agent"
