@@ -68,6 +68,10 @@ export default function FestivalScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   
+  // Toast and loading context
+  const { showToast } = useToast();
+  const { isLoading, debouncedAction } = useLoading();
+  
   // Ticket Purchase Modal States
   const [ticketModalVisible, setTicketModalVisible] = useState(false);
   const [selectedTicketType, setSelectedTicketType] = useState<'general' | 'vip'>('general');
