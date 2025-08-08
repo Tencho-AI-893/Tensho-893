@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,9 +6,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useToast } from './context/ToastContext';
+import { useLoading } from './context/LoadingContext';
+import { PhilosophyCardSkeleton } from './components/SkeletonLoader';
 
 const { width, height } = Dimensions.get('window');
 
