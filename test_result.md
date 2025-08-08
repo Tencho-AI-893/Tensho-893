@@ -297,6 +297,7 @@ test_plan:
     - "Festival Screen with API integration and Loading States"
     - "Meditation Experience Detail Screen"
     - "Push Notifications with expo-notifications"
+    - "NFT Mint v0.1 with Mock and Testnet Modes"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
