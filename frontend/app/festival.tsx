@@ -227,10 +227,17 @@ export default function FestivalScreen() {
     }
   );
 
-  // Ticket Purchase Functions
-  const openTicketModal = () => {
-    setTicketModalVisible(true);
-  };
+  // Debounced ticket purchase modal opener
+  const openTicketModal = debouncedAction(
+    'ticket-modal',
+    async () => {
+      setTicketModalVisible(true);
+    },
+    {
+      loadingMessage: 'チケット購入画面を準備中...',
+      delay: 200,
+    }
+  );
 
   const closeTicketModal = () => {
     setTicketModalVisible(false);
