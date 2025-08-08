@@ -131,14 +131,17 @@ export default function NotificationsScreen() {
 
   const generatePushToken = async () => {
     try {
-      const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+      const detectedProjectId = Constants.expoConfig?.extra?.eas?.projectId || 
+        (Constants as any)?.easConfig?.projectId;
       
-      if (!projectId) {
-        throw new Error('Project ID not found in configuration');
+      if (!detectedProjectId) {
+        throw new Error('EAS Project ID not found in configuration');
       }
 
+      console.log('📱 Generating push token with project ID:', detectedProjectId);
+
       const tokenData = await Notifications.getExpoPushTokenAsync({
-        projectId: projectId,
+        projectId: detectedProjectId,
       });
       
       const token = tokenData.data;
@@ -148,12 +151,12 @@ export default function NotificationsScreen() {
       await AsyncStorage.setItem(EXPO_PUSH_TOKEN_KEY, token);
       
       showToast('success', 'プッシュトークンを生成しました');
-      console.log('📱 Expo Push Token:', token);
+      console.log('📱 Expo Push Token generated:', token);
       
       return token;
     } catch (error) {
       console.error('Error generating push token:', error);
-      showToast('error', 'プッシュトークンの生成に失敗しました');
+      showToast('error', `プッシュトークンの生成に失敗しました: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
     }
   };
