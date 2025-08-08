@@ -72,6 +72,20 @@ export default function NotificationsScreen() {
     try {
       setIsLoading(true);
 
+      // Get and store project ID
+      const detectedProjectId = Constants.expoConfig?.extra?.eas?.projectId || 
+        (Constants as any)?.easConfig?.projectId;
+      
+      setProjectId(detectedProjectId);
+      
+      if (detectedProjectId) {
+        console.log('📱 EAS Project ID detected:', detectedProjectId);
+        showToast('success', `EAS プロジェクトに接続しました`);
+      } else {
+        console.log('⚠️ No EAS Project ID found');
+        showToast('info', 'EAS プロジェクト ID が見つかりません');
+      }
+
       // Check if device supports push notifications
       if (!Device.isDevice) {
         setPermissionStatus('simulator');
@@ -102,8 +116,10 @@ export default function NotificationsScreen() {
       if (storedToken) {
         setExpoPushToken(storedToken);
         showToast('success', 'プッシュトークンを復元しました');
-      } else {
+      } else if (detectedProjectId) {
         await generatePushToken();
+      } else {
+        showToast('error', 'プッシュトークン生成にはEAS プロジェクトIDが必要です');
       }
     } catch (error) {
       console.error('Notification initialization error:', error);
