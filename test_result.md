@@ -271,6 +271,18 @@ frontend:
         agent: "main"
         comment: "Implemented comprehensive push notifications system with expo-notifications. Features: permission request & storage of Expo push token, local notification test (web/preview fallback), real push test (iOS/Android) using Expo /push/send service, debounced actions with toast feedback, web/no token handling with disabled buttons and explanatory tooltips. Full UX with non-blocking toasts and device testing guide included."
 
+  - task: "NFT Mint v0.1 with Mock and Testnet Modes"
+    implemented: true
+    working: "needs_testing"
+    file: "nft.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Implemented NFT Mint v0.1 with dual modes: (a) mock mint (no chain) with AsyncStorage persistence and SVG image generation, (b) Polygon Amoy testnet mode (simulated blockchain interaction). UI features mint button, status display (pending/success/fail), gallery refresh on success, metadata form (title/description/location/genre), environment variable detection (ALCHEMY_RPC, WALLETCONNECT_PROJECT_ID), clear requirements listing when envs missing, debounced actions with toast feedback, minted NFT badges, transaction hash & token ID display."
+
 metadata:
   created_by: "main_agent"
   version: "2.0"
