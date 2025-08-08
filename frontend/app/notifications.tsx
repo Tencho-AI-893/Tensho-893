@@ -561,6 +561,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  missingValue: {
+    color: '#ef4444',
+    fontStyle: 'italic',
+  },
   permissionButton: {
     backgroundColor: '#ffc107',
     flexDirection: 'row',
