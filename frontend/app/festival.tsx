@@ -590,11 +590,14 @@ export default function FestivalScreen() {
 
             {/* Purchase Button */}
             <TouchableOpacity
-              style={[styles.purchaseButton, purchaseLoading && styles.purchaseButtonDisabled]}
+              style={[
+                styles.purchaseButton, 
+                (isLoading('stripe-checkout') || purchaseLoading) && styles.purchaseButtonDisabled
+              ]}
               onPress={handleStripeCheckout}
-              disabled={purchaseLoading}
+              disabled={isLoading('stripe-checkout') || purchaseLoading}
             >
-              {purchaseLoading ? (
+              {(isLoading('stripe-checkout') || purchaseLoading) ? (
                 <ActivityIndicator size="small" color="#000" />
               ) : (
                 <>
