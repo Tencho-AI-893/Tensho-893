@@ -177,11 +177,14 @@ frontend:
       - working: "needs_testing"
         agent: "main"
         comment: "Fixed NavigationContainer duplication error. Implemented expo-router Tabs navigation with 4 screens: Home, Festival, Profile, NFT. Manual testing shows all navigation working correctly."
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Added ToastProvider and LoadingProvider context wrappers to _layout.tsx. Global toast and loading state management now available throughout the app."
         
-  - task: "Home Screen UI"
+  - task: "Home Screen UI with Global Loading & Toast"
     implemented: true
     working: "needs_testing"
-    file: "index.tsx"
+    file: "index.tsx, context/ToastContext.tsx, context/LoadingContext.tsx"
     stuck_count: 0
     priority: "high"
     needs_retesting: true
@@ -189,11 +192,14 @@ frontend:
       - working: "needs_testing"
         agent: "main"
         comment: "Home screen with DJ Senoh branding, philosophy cards, navigation info. Sound wave animation, responsive design. Manual screenshots confirm working state."
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Enhanced Home screen with global loading states and toast notifications. Philosophy cards now use debounced actions, skeleton loaders during initial load, and toast feedback. Navigation to /experience/index route implemented for meditation card."
         
-  - task: "Festival Screen with API integration"
+  - task: "Festival Screen with API integration and Loading States"
     implemented: true
     working: "needs_testing"
-    file: "festival.tsx"
+    file: "festival.tsx, components/SkeletonLoader.tsx"
     stuck_count: 0
     priority: "high"
     needs_retesting: true
@@ -201,6 +207,9 @@ frontend:
       - working: "needs_testing"
         agent: "main"
         comment: "Festival screen loads Moment Festival 2025 data via API. Shows venue info, sound system, family services, ticket pricing. Manual testing shows successful API integration."
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Added global loading states with skeleton loaders, debounced actions for ticket purchase flow, toast notifications for user feedback. All buttons now use debounced actions to prevent duplicate taps."
         
   - task: "Profile Screen with API integration"
     implemented: true
@@ -225,6 +234,42 @@ frontend:
       - working: "needs_testing"
         agent: "main"
         comment: "NFT gallery shows mock NFT collection via API. Modal detail view, rarity system, base64 images working. Manual testing shows successful data loading."
+        
+  - task: "Global Toast Notification System"
+    implemented: true
+    working: "needs_testing"
+    file: "context/ToastContext.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Implemented comprehensive toast notification system with success, error, info, and loading states. Features non-blocking toasts, action buttons, auto-hide timers, and visual feedback."
+        
+  - task: "Global Loading & Debounced Actions System"
+    implemented: true
+    working: "needs_testing"
+    file: "context/LoadingContext.tsx, hooks/useDebounce.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Implemented global loading state management with debounced actions to prevent duplicate taps. Features loading indicators, success/error handling, and integration with toast notifications."
+
+  - task: "Meditation Experience Detail Screen"
+    implemented: true
+    working: "needs_testing"
+    file: "experience/index.tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "needs_testing"
+        agent: "main"
+        comment: "Created detailed meditation experience screen with navigation from Home philosophy cards. Features step-by-step meditation guide, tips, and professional design."
 
 metadata:
   created_by: "main_agent"
