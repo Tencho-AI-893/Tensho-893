@@ -341,11 +341,30 @@ export default function FestivalScreen() {
 
   if (loading && !refreshing) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#fff" />
-        <Text style={styles.loadingText}>フェスティバル情報を読み込み中...</Text>
-        <Text style={styles.loadingSubtext}>Strapi CMS から取得中</Text>
-      </View>
+      <SafeAreaView style={styles.container}>
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          <View style={styles.sourceIndicator}>
+            <Ionicons name="cloud-sync" size={12} color="#60a5fa" />
+            <Text style={styles.sourceText}>データを読み込み中...</Text>
+          </View>
+          
+          {/* Festival Header Skeleton */}
+          <View style={styles.header}>
+            <CardSkeleton />
+          </View>
+
+          {/* Sections Skeletons */}
+          <View style={styles.section}>
+            <CardSkeleton />
+          </View>
+          <View style={styles.section}>
+            <CardSkeleton />
+          </View>
+          <View style={styles.section}>
+            <CardSkeleton />
+          </View>
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
