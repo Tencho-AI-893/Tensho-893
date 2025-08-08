@@ -6,7 +6,9 @@ import { LoadingProvider } from './context/LoadingContext';
 
 export default function TabLayout() {
   return (
-    <Tabs
+    <ToastProvider>
+      <LoadingProvider>
+        <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#fff',
         tabBarInactiveTintColor: '#666',
