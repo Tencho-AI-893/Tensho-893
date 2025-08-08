@@ -242,13 +242,13 @@ export default function NotificationsScreen() {
 
   const copyTokenToClipboard = debouncedAction(
     'copy-token',
-    async () => {
-      if (expoPushToken) {
-        await Clipboard.setStringAsync(expoPushToken);
+    async (type: string, value: string) => {
+      if (value) {
+        await Clipboard.setStringAsync(value);
       }
     },
     {
-      successMessage: 'トークンをクリップボードにコピーしました',
+      successMessage: 'クリップボードにコピーしました',
       delay: 200,
     }
   );
